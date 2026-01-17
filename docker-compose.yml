@@ -1,6 +1,16 @@
-version: '3.8'
-
 services:
+  app:
+    build: .
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/myapp_dev
+      MONGO_URI: mongodb://mongo:27017/myapp_dev
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - mongo
+
   postgres:
     image: postgres:16
     environment:
@@ -8,7 +18,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: myapp_dev
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
