@@ -55,6 +55,14 @@ When running with Docker Compose, the app uses internal service names for DBs. I
 - `GET /` basic health response
 - `GET /health` returns `{"status":"ok"}`
 
+## Project structure
+
+- `src/server.js` main entry point
+- `src/config/` database and app configuration
+- `src/routes/` route definitions
+- `src/controllers/` request handlers
+- `src/models/` data models
+
 ## Contributing
 
 1) Fork the repo and create your branch: `git checkout -b feature/my-change`
