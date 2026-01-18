@@ -5,7 +5,7 @@ Backend API for Dwahfy. This repo is intentionally separate from the frontend fo
 ## Requirements
 
 - Node.js 20+
-- Docker (for Postgres + Mongo, optional)
+- Docker (for Postgres, optional)
 
 ## Quick start (local + Docker databases)
 
@@ -18,13 +18,13 @@ cp ex.env .env
 2) Start databases:
 
 ```bash
-docker compose up -d postgres mongo
+docker compose up -d postgres
 ```
 
 3) Run the server:
 
 ```bash
-node server.js
+node src/server.js
 ```
 
 API will be available at `http://localhost:3000`.
@@ -45,7 +45,6 @@ These are in `ex.env`:
 
 - `PORT` (default: 3000)
 - `DATABASE_URL` (Postgres connection string for local dev)
-- `MONGO_URI` (Mongo connection string for local dev)
 - `CORS_ORIGIN` (frontend URL, for example `http://localhost:3000`)
 
 When running with Docker Compose, the app uses internal service names for DBs. If you run the server directly on your host, keep using `localhost` in the env file.

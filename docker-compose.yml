@@ -4,12 +4,10 @@ services:
     environment:
       PORT: 3000
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/myapp_dev
-      MONGO_URI: mongodb://mongo:27017/myapp_dev
     ports:
       - "3000:3000"
     depends_on:
       - postgres
-      - mongo
 
   postgres:
     image: postgres:16
@@ -23,14 +21,5 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
-  mongo:
-    image: mongo:7
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
-    restart: unless-stopped
-
 volumes:
   postgres_data:
-  mongo_data:
