@@ -7,6 +7,9 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
+
+app.use('/auth', authRoutes);
+
 app.get('/', (req, res) => {
   res.json({ message: 'Server is running!' });
 });
@@ -14,7 +17,7 @@ app.get('/', (req, res) => {
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
-
+ 
 const start = async () => {
   await initDb();
   app.listen(PORT, () => {
