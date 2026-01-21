@@ -1,9 +1,8 @@
 services:
   app:
     build: .
-    environment:
-      PORT: 3000
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/myapp_dev
+    env_file:
+      - .env
     ports:
       - "3000:3000"
     depends_on:

@@ -45,6 +45,10 @@ These are in `ex.env`:
 
 - `PORT` (default: 3000)
 - `DATABASE_URL` (Postgres connection string for local dev)
+- `DATABASE_URL` can include `?sslmode=require` for Supabase
+- `JWT_SECRET` (used to sign auth tokens)
+- `OTP_SECRET` (used to hash OTPs)
+- `SMTP_*` (optional SMTP config for OTP emails)
 - `CORS_ORIGIN` (frontend URL, for example `http://localhost:3000`)
 
 When running with Docker Compose, the app uses internal service names for DBs. If you run the server directly on your host, keep using `localhost` in the env file.
@@ -53,14 +57,34 @@ When running with Docker Compose, the app uses internal service names for DBs. I
 
 - `GET /` basic health response
 - `GET /health` returns `{"status":"ok"}`
+- `POST /auth/start` begin signup with email-only (sends OTP)
+- `POST /auth/verify-otp` verify OTP and get register token
+- `POST /auth/register` complete signup with username + password
+- `POST /auth/login` login with username + password
+- `POST /auth/accounts` list accounts for an identity token
+- `POST /auth/switch` switch accounts using an identity token
+- `POST /auth/logout` revoke the current JWT (in-memory)
+- `POST /auth/change-password` change password for the current account
+- `POST /auth/request-email-change` send OTP to a new email address
+- `POST /auth/confirm-email-change` confirm email change with OTP
+
+## Generate a JWT (dev)
+
+Use the same secret as your server (`JWT_SECRET` in `.env`):
+
+```bash
+node -e "const jwt=require('jsonwebtoken'); console.log(jwt.sign({id:1}, 'your-secret-here', {expiresIn:'7d'}))"
+```
 
 ## Project structure
 
 - `src/server.js` main entry point
 - `src/config/` database and app configuration
-- `src/routes/` route definitions
 - `src/controllers/` request handlers
-- `src/models/` data models
+- `src/models/` data access helpers
+- `src/routes/` route definitions
+- `src/services/` external service helpers
+- `src/utils/` utilities
 
 ## Contributing
 
