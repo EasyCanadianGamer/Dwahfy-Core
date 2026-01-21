@@ -86,6 +86,10 @@ node -e "const jwt=require('jsonwebtoken'); console.log(jwt.sign({id:1}, 'your-s
 - `src/services/` external service helpers
 - `src/utils/` utilities
 
+## Roadmap
+
+See `doc/roadmap.md`.
+
 ## Contributing
 
 1) Fork the repo and create your branch: `git checkout -b feature/my-change`
