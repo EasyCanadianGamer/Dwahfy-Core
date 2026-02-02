@@ -66,6 +66,13 @@ Email changes are verified with OTP to the new address:
 1) `POST /auth/request-email-change` (requires JWT)
 2) `POST /auth/confirm-email-change` with the OTP
 
+### Reset password (email + username)
+
+Password resets are verified with an OTP sent to the email on the account:
+
+1) `POST /auth/request-password-reset` with `email` + `username`
+2) `POST /auth/confirm-password-reset` with `email`, `username`, `otp`, and `newPassword`
+
 ### Notes
 
 - OTPs are single-use and expire after 10 minutes.

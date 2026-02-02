@@ -88,3 +88,19 @@ curl -X POST http://localhost:3000/auth/confirm-email-change \
   -H "Authorization: Bearer <JWT_TOKEN>" \
   -d '{"newEmail":"new@example.com","otp":"123456"}'
 ```
+
+### Request password reset
+
+```bash
+curl -X POST http://localhost:3000/auth/request-password-reset \
+  -H "Content-Type: application/json" \
+  -d '{"email":"you@example.com","username":"yourname"}'
+```
+
+### Confirm password reset
+
+```bash
+curl -X POST http://localhost:3000/auth/confirm-password-reset \
+  -H "Content-Type: application/json" \
+  -d '{"email":"you@example.com","username":"yourname","otp":"123456","newPassword":"newpass123"}'
+```

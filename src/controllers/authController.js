@@ -12,6 +12,7 @@ const {
   getAccountsByIdentityId,
   getAccountByUsername,
   getAccountWithIdentityById,
+  getAccountByUsernameAndEmail,
   createAccount,
   isUsernameTaken,
   getAccountPasswordById,
@@ -25,6 +26,9 @@ const {
   createEmailChangeOtp,
   getLatestEmailChangeOtp,
   consumeEmailChangeOtp,
+  createPasswordResetOtp,
+  getLatestPasswordResetOtp,
+  consumePasswordResetOtp,
 } = require('../models/otpModel');
 
 const OTP_TTL_MS = 10 * 60 * 1000;
@@ -491,6 +495,109 @@ const confirmEmailChange = async (req, res) => {
   }
 };
 
+const requestPasswordReset = async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body.email);
+    const username = normalizeUsername(req.body.username);
+    if (!email || !isValidEmail(email) || !isValidUsername(username)) {
+      return res
+        .status(400)
+        .json({ message: 'Valid email and username are required' });
+    }
+
+    const rateKey = `password-reset:${email}:${req.ip}`;
+    const rate = hitRateLimit(rateKey);
+    if (!rate.allowed) {
+      return res.status(429).json({
+        message: `Too many attempts. Try again in ${Math.ceil(
+          rate.retryAfterMs / 1000
+        )}s.`,
+      });
+    }
+
+    const account = await getAccountByUsernameAndEmail(username, email);
+    if (account) {
+      const otp = String(crypto.randomInt(0, 1000000)).padStart(6, '0');
+      const otpExpiresAt = new Date(Date.now() + OTP_TTL_MS);
+      await createPasswordResetOtp(account.id, otpHash(otp), otpExpiresAt);
+      await sendEmail({
+        to: email,
+        subject: 'Reset your Dwahfy password',
+        text: `Your OTP is ${otp}. It expires in 10 minutes.`,
+      });
+    }
+
+    return res.json({
+      message: 'If the account exists, an OTP has been sent to the email.',
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: `Failed to request password reset: ${error.message}`,
+    });
+  }
+};
+
+const confirmPasswordReset = async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body.email);
+    const username = normalizeUsername(req.body.username);
+    const otp = (req.body.otp || '').trim();
+    const newPassword = req.body.newPassword || '';
+    if (
+      !email ||
+      !isValidEmail(email) ||
+      !isValidUsername(username) ||
+      otp.length !== 6
+    ) {
+      return res
+        .status(400)
+        .json({ message: 'Email, username, and OTP are required' });
+    }
+    if (newPassword.length < 8) {
+      return res
+        .status(400)
+        .json({ message: 'Password must be at least 8 characters' });
+    }
+
+    const rateKey = `password-reset-verify:${email}:${req.ip}`;
+    const rate = hitRateLimit(rateKey);
+    if (!rate.allowed) {
+      return res.status(429).json({
+        message: `Too many attempts. Try again in ${Math.ceil(
+          rate.retryAfterMs / 1000
+        )}s.`,
+      });
+    }
+
+    const account = await getAccountByUsernameAndEmail(username, email);
+    if (!account) {
+      return res.status(400).json({ message: 'OTP is invalid or expired' });
+    }
+
+    const record = await getLatestPasswordResetOtp(account.id);
+    if (!record) {
+      return res.status(400).json({ message: 'OTP is invalid or expired' });
+    }
+    if (new Date(record.expires_at).getTime() < Date.now()) {
+      return res.status(400).json({ message: 'OTP is invalid or expired' });
+    }
+    if (otpHash(otp) !== record.otp_hash) {
+      return res.status(400).json({ message: 'OTP is invalid or expired' });
+    }
+
+    await consumePasswordResetOtp(record.id);
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await updatePassword(account.id, passwordHash);
+
+    return res.json({ message: 'Password reset successfully' });
+  } catch (error) {
+    return res.status(500).json({
+      error: `Failed to reset password: ${error.message}`,
+    });
+  }
+};
+
 const logout = async (req, res) => {
   try {
     const token = getAuthToken(req);
@@ -536,6 +643,8 @@ module.exports = {
   changePassword,
   requestEmailChange,
   confirmEmailChange,
+  requestPasswordReset,
+  confirmPasswordReset,
   logout,
   rateLimitInfo,
 };

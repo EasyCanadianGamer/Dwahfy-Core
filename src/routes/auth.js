@@ -9,6 +9,8 @@ const {
   changePassword,
   requestEmailChange,
   confirmEmailChange,
+  requestPasswordReset,
+  confirmPasswordReset,
   logout,
   rateLimitInfo,
 } = require('../controllers/authController');
@@ -24,6 +26,8 @@ router.post('/switch', switchAccount);
 router.post('/change-password', changePassword);
 router.post('/request-email-change', requestEmailChange);
 router.post('/confirm-email-change', confirmEmailChange);
+router.post('/request-password-reset', requestPasswordReset);
+router.post('/confirm-password-reset', confirmPasswordReset);
 router.post('/logout', logout);
 router.get('/rate-limit', rateLimitInfo);
 

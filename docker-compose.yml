@@ -6,7 +6,8 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy     # ← this is the key change
 
   postgres:
     image: postgres:16
@@ -19,6 +20,12 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
+    healthcheck:                           # ← add this block
+      test: ["CMD-SHELL", "pg_isready -U postgres -d myapp_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s                    # gives extra time for init
 
 volumes:
   postgres_data:

@@ -11,10 +11,11 @@ This is a lightweight status list to track what is complete and what is next.
 - Logout (in-memory revocation)
 - Password change per account
 - Email change with OTP verification
+- Password reset flow (forgot password)
 
 ### In progress
 
-- Password reset flow (forgot password)
+-  Added posts
 
 ### Planned
 

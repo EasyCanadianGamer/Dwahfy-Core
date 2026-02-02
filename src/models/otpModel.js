@@ -61,6 +61,37 @@ const consumeEmailChangeOtp = async (otpId) => {
   );
 };
 
+const createPasswordResetOtp = async (accountId, otpHash, expiresAt) => {
+  await pool.query(
+    `
+    INSERT INTO password_reset_otps (account_id, otp_hash, expires_at)
+    VALUES ($1, $2, $3)
+  `,
+    [accountId, otpHash, expiresAt]
+  );
+};
+
+const getLatestPasswordResetOtp = async (accountId) => {
+  const result = await pool.query(
+    `
+    SELECT id, otp_hash, expires_at
+    FROM password_reset_otps
+    WHERE account_id = $1 AND consumed_at IS NULL
+    ORDER BY created_at DESC
+    LIMIT 1
+  `,
+    [accountId]
+  );
+  return result.rows[0] || null;
+};
+
+const consumePasswordResetOtp = async (otpId) => {
+  await pool.query(
+    'UPDATE password_reset_otps SET consumed_at = NOW() WHERE id = $1',
+    [otpId]
+  );
+};
+
 module.exports = {
   createEmailOtp,
   getLatestEmailOtp,
@@ -68,4 +99,7 @@ module.exports = {
   createEmailChangeOtp,
   getLatestEmailChangeOtp,
   consumeEmailChangeOtp,
+  createPasswordResetOtp,
+  getLatestPasswordResetOtp,
+  consumePasswordResetOtp,
 };

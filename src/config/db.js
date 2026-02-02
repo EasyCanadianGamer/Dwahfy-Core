@@ -81,11 +81,25 @@ const initDb = async () => {
     );
   `);
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS password_reset_otps (
+      id BIGSERIAL PRIMARY KEY,
+      account_id BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+      otp_hash TEXT NOT NULL,
+      expires_at TIMESTAMPTZ NOT NULL,
+      consumed_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+  await pool.query(`
     CREATE INDEX IF NOT EXISTS email_otps_email_idx ON email_otps(email);
   `);
   await pool.query(`
     CREATE INDEX IF NOT EXISTS email_change_otps_account_idx
       ON email_change_otps(account_id);
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS password_reset_otps_account_idx
+      ON password_reset_otps(account_id);
   `);
   console.log('Postgres connected');
 };
