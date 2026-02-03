@@ -3,13 +3,20 @@ require('dotenv').config();
 const express = require('express');
 const { initDb, closeDb } = require('./config/db');
 const authRoutes = require('./routes/auth');
+const postRoutes = require('./routes/posts');
+const profileRoutes = require('./routes/profile');
+const badgeRoutes = require('./routes/badges');
+const adminBadgeRoutes = require('./routes/adminBadges');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-
 app.use('/auth', authRoutes);
+app.use('/posts', postRoutes);
+app.use('/profile', profileRoutes);
+app.use('/badges', badgeRoutes);
+app.use('/admin', adminBadgeRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Server is running!' });

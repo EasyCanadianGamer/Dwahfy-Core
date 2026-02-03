@@ -27,6 +27,20 @@ const getAccountByUsername = async (username) => {
   return result.rows[0] || null;
 };
 
+const getAccountById = async (accountId) => {
+  const result = await pool.query(
+    `
+    SELECT accounts.id, accounts.username, identities.email,
+      identities.id AS identity_id
+    FROM accounts
+    JOIN identities ON identities.id = accounts.identity_id
+    WHERE accounts.id = $1
+  `,
+    [accountId]
+  );
+  return result.rows[0] || null;
+};
+
 const getAccountWithIdentityById = async (accountId, identityId) => {
   const result = await pool.query(
     `
@@ -100,6 +114,7 @@ const updateAccountIdentity = async (accountId, identityId) => {
 module.exports = {
   getAccountsByIdentityId,
   getAccountByUsername,
+  getAccountById,
   getAccountWithIdentityById,
   getAccountByUsernameAndEmail,
   createAccount,

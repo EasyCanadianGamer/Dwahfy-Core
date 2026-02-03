@@ -15,7 +15,9 @@ This is a lightweight status list to track what is complete and what is next.
 
 ### In progress
 
--  Added posts
+- Text-only posts (MVP)
+- Post replies (single-level)
+- Likes and dislikes
 
 ### Planned
 

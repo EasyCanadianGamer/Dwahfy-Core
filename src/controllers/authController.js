@@ -3,7 +3,11 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { sendEmail } = require('../services/email');
 const { hitRateLimit, WINDOW_MS, MAX_ATTEMPTS } = require('../utils/rateLimit');
-const { blockToken, isTokenBlocked } = require('../utils/tokenBlocklist');
+const { blockToken } = require('../utils/tokenBlocklist');
+const {
+  ensureJwtSecret,
+  requireAccountToken,
+} = require('../utils/authToken');
 const {
   upsertIdentityByEmail,
   getIdentityById,
@@ -44,40 +48,6 @@ const isValidUsername = (username) =>
 const otpHash = (otp) => {
   const secret = process.env.OTP_SECRET || process.env.JWT_SECRET || '';
   return crypto.createHash('sha256').update(`${secret}${otp}`).digest('hex');
-};
-
-const ensureJwtSecret = () => {
-  if (!process.env.JWT_SECRET) {
-    throw new Error('JWT_SECRET is not set');
-  }
-};
-
-const getAuthToken = (req) => {
-  const header = req.headers.authorization || '';
-  if (header.startsWith('Bearer ')) {
-    return header.slice('Bearer '.length).trim();
-  }
-  return req.body.token || '';
-};
-
-const requireAccountToken = (req) => {
-  const token = getAuthToken(req);
-  if (!token) {
-    return { error: { status: 400, message: 'Token is required' } };
-  }
-  ensureJwtSecret();
-  if (isTokenBlocked(token)) {
-    return { error: { status: 401, message: 'Token is revoked' } };
-  }
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decoded || !decoded.accountId) {
-      return { error: { status: 401, message: 'Token is invalid' } };
-    }
-    return { token, decoded };
-  } catch (error) {
-    return { error: { status: 401, message: 'Token is invalid' } };
-  }
 };
 
 const startSignup = async (req, res) => {

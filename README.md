@@ -67,6 +67,23 @@ When running with Docker Compose, the app uses internal service names for DBs. I
 - `POST /auth/change-password` change password for the current account
 - `POST /auth/request-email-change` send OTP to a new email address
 - `POST /auth/confirm-email-change` confirm email change with OTP
+- `POST /posts` create a text post
+- `GET /posts` list recent posts
+- `POST /posts/:postId/replies` reply to a post
+- `GET /posts/:postId/replies` list replies
+- `POST /posts/:postId/react` like or dislike a post
+- `GET /profile` get current profile
+- `PATCH /profile` update current profile
+- `GET /profile/:username` public profile by username
+- `GET /badges` list available badges
+- `GET /admin/badges` list badges (admin)
+- `POST /admin/badges` create badge (admin)
+- `PATCH /admin/badges/:badgeId` update badge (admin)
+- `DELETE /admin/badges/:badgeId` delete badge (admin)
+
+## Admin access
+
+Set `ADMIN_API_KEY` and send it via `X-Admin-Key` or `Authorization: Bearer <key>` for `/admin/*` routes.
 
 ## Generate a JWT (dev)
 
