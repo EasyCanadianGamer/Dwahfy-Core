@@ -15,7 +15,7 @@ curl http://localhost:3000/profile \
 curl -X PATCH http://localhost:3000/profile \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <JWT_TOKEN>" \
-  -d '{"displayName":"Sky","bio":"Builder","avatarUrl":"https://example.com/avatar.png","links":["https://example.com","https://x.com/you"],"badgeId":1}'
+  -d '{"displayName":"Sky","bio":"Builder","avatarUrl":"https://example.com/avatar.png","links":["https://example.com","https://x.com/you"],"badgeId":1,"badWordsEnabled":false}'
 ```
 
 ### Public profile by username

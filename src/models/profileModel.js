@@ -7,7 +7,7 @@ const ensureProfile = async (accountId, username) => {
     VALUES ($1, $2)
     ON CONFLICT (account_id)
     DO UPDATE SET display_name = profiles.display_name
-    RETURNING id, account_id, display_name, bio, avatar_url, links, badge_id, created_at, updated_at
+    RETURNING id, account_id, display_name, bio, avatar_url, bad_words_enabled, links, badge_id, created_at, updated_at
   `,
     [accountId, username]
   );
@@ -17,7 +17,7 @@ const ensureProfile = async (accountId, username) => {
 const getProfileByAccountId = async (accountId) => {
   const result = await pool.query(
     `
-    SELECT id, account_id, display_name, bio, avatar_url, links, badge_id, created_at, updated_at
+    SELECT id, account_id, display_name, bio, avatar_url, bad_words_enabled, links, badge_id, created_at, updated_at
     FROM profiles
     WHERE account_id = $1
   `,
@@ -26,9 +26,30 @@ const getProfileByAccountId = async (accountId) => {
   return result.rows[0] || null;
 };
 
+const getBadWordsEnabledByAccountId = async (accountId) => {
+  const result = await pool.query(
+    `
+    SELECT bad_words_enabled
+    FROM profiles
+    WHERE account_id = $1
+  `,
+    [accountId]
+  );
+  return result.rows[0] ? result.rows[0].bad_words_enabled : null;
+};
+
 const updateProfileByAccountId = async (
   accountId,
-  { displayName, bio, avatarUrl, links, badgeId, badgeIdProvided }
+  {
+    displayName,
+    bio,
+    avatarUrl,
+    links,
+    badgeId,
+    badgeIdProvided,
+    badWordsEnabled,
+    badWordsEnabledProvided,
+  }
 ) => {
   const result = await pool.query(
     `
@@ -36,13 +57,24 @@ const updateProfileByAccountId = async (
     SET display_name = COALESCE($2, display_name),
         bio = COALESCE($3, bio),
         avatar_url = COALESCE($4, avatar_url),
-        links = COALESCE($5, links),
-        badge_id = CASE WHEN $6 THEN $7 ELSE badge_id END,
+        bad_words_enabled = CASE WHEN $5 THEN $6 ELSE bad_words_enabled END,
+        links = COALESCE($7, links),
+        badge_id = CASE WHEN $8 THEN $9 ELSE badge_id END,
         updated_at = NOW()
     WHERE account_id = $1
-    RETURNING id, account_id, display_name, bio, avatar_url, links, badge_id, created_at, updated_at
+    RETURNING id, account_id, display_name, bio, avatar_url, bad_words_enabled, links, badge_id, created_at, updated_at
   `,
-    [accountId, displayName, bio, avatarUrl, links, badgeIdProvided, badgeId]
+    [
+      accountId,
+      displayName,
+      bio,
+      avatarUrl,
+      badWordsEnabledProvided,
+      badWordsEnabled,
+      links,
+      badgeIdProvided,
+      badgeId,
+    ]
   );
   return result.rows[0] || null;
 };
@@ -76,6 +108,7 @@ const getPublicProfileByUsername = async (username) => {
 module.exports = {
   ensureProfile,
   getProfileByAccountId,
+  getBadWordsEnabledByAccountId,
   updateProfileByAccountId,
   getPublicProfileByUsername,
 };

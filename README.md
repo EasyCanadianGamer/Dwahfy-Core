@@ -50,6 +50,7 @@ These are in `ex.env`:
 - `OTP_SECRET` (used to hash OTPs)
 - `SMTP_*` (optional SMTP config for OTP emails)
 - `CORS_ORIGIN` (frontend URL, for example `http://localhost:3000`)
+- `BAD_WORDS_ENABLED` (set to `false` to disable bad-word filtering)
 
 When running with Docker Compose, the app uses internal service names for DBs. If you run the server directly on your host, keep using `localhost` in the env file.
 

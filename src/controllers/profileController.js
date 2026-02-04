@@ -45,6 +45,12 @@ const validateProfile = ({ displayName, bio, avatarUrl, links }) => {
   return null;
 };
 
+const parseBooleanField = (value) => {
+  if (value === undefined) return { provided: false, value: undefined };
+  if (typeof value === 'boolean') return { provided: true, value };
+  return { provided: true, value: null };
+};
+
 const buildBadgePayload = async (badgeId) => {
   if (!badgeId) {
     return null;
@@ -86,6 +92,7 @@ const getProfileHandler = async (req, res) => {
         displayName: profile.display_name || account.username,
         bio: profile.bio,
         avatarUrl: profile.avatar_url,
+        badWordsEnabled: profile.bad_words_enabled,
         links: profile.links || [],
         badge,
       },
@@ -113,6 +120,7 @@ const updateProfileHandler = async (req, res) => {
     const bio = normalizeString(req.body.bio);
     const avatarUrl = normalizeString(req.body.avatarUrl);
     const links = normalizeLinks(req.body.links);
+    const badWordsField = parseBooleanField(req.body.badWordsEnabled);
     const badgeIdProvided = Object.prototype.hasOwnProperty.call(
       req.body,
       'badgeId'
@@ -127,6 +135,7 @@ const updateProfileHandler = async (req, res) => {
       bio === null &&
       avatarUrl === null &&
       links === undefined &&
+      !badWordsField.provided &&
       !badgeIdProvided
     ) {
       return res.status(400).json({ message: 'No profile fields provided' });
@@ -134,6 +143,12 @@ const updateProfileHandler = async (req, res) => {
 
     if (links === null) {
       return res.status(400).json({ message: 'Links must be an array' });
+    }
+
+    if (badWordsField.provided && badWordsField.value === null) {
+      return res
+        .status(400)
+        .json({ message: 'badWordsEnabled must be a boolean' });
     }
 
     if (badgeIdProvided && badgeId !== null && Number.isNaN(badgeId)) {
@@ -169,6 +184,8 @@ const updateProfileHandler = async (req, res) => {
       links,
       badgeId,
       badgeIdProvided,
+      badWordsEnabled: badWordsField.value,
+      badWordsEnabledProvided: badWordsField.provided,
     });
 
     const badge = await buildBadgePayload(profile.badge_id);
@@ -179,6 +196,7 @@ const updateProfileHandler = async (req, res) => {
         displayName: profile.display_name || account.username,
         bio: profile.bio,
         avatarUrl: profile.avatar_url,
+        badWordsEnabled: profile.bad_words_enabled,
         links: profile.links || [],
         badge,
       },

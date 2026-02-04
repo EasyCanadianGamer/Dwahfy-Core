@@ -66,10 +66,15 @@ const initDb = async () => {
       display_name TEXT,
       bio TEXT,
       avatar_url TEXT,
+      bad_words_enabled BOOLEAN NOT NULL DEFAULT TRUE,
       links JSONB NOT NULL DEFAULT '[]'::jsonb,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+  `);
+  await pool.query(`
+    ALTER TABLE profiles
+    ADD COLUMN IF NOT EXISTS bad_words_enabled BOOLEAN NOT NULL DEFAULT TRUE;
   `);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS badges (

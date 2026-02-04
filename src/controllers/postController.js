@@ -7,6 +7,8 @@ const {
   setReaction,
 } = require('../models/postModel');
 const { requireAccountToken } = require('../utils/authToken');
+const { isBadWordsEnabled, containsBadWords } = require('../utils/badWords');
+const { getBadWordsEnabledByAccountId } = require('../models/profileModel');
 
 const MAX_CONTENT_LENGTH = 1000;
 const DEFAULT_LIMIT = 20;
@@ -30,6 +32,26 @@ const parseId = (value) => {
   return parsed;
 };
 
+const resolveBadWordsEnabled = async (accountId) => {
+  const preference = await getBadWordsEnabledByAccountId(accountId);
+  if (preference === null || preference === undefined) {
+    return isBadWordsEnabled();
+  }
+  return preference;
+};
+
+const rejectBadWords = async (accountId, content, res) => {
+  const enabled = await resolveBadWordsEnabled(accountId);
+  if (!enabled) {
+    return false;
+  }
+  if (!containsBadWords(content)) {
+    return false;
+  }
+  res.status(400).json({ message: 'Content contains disallowed language' });
+  return true;
+};
+
 const createPostHandler = async (req, res) => {
   try {
     const auth = requireAccountToken(req);
@@ -45,6 +67,9 @@ const createPostHandler = async (req, res) => {
       return res.status(400).json({
         message: `Post content must be ${MAX_CONTENT_LENGTH} characters or fewer`,
       });
+    }
+    if (await rejectBadWords(auth.decoded.accountId, content, res)) {
+      return null;
     }
 
     const post = await createPost(auth.decoded.accountId, content, null);
@@ -97,6 +122,9 @@ const createReplyHandler = async (req, res) => {
       return res.status(400).json({
         message: `Reply content must be ${MAX_CONTENT_LENGTH} characters or fewer`,
       });
+    }
+    if (await rejectBadWords(auth.decoded.accountId, content, res)) {
+      return null;
     }
 
     const reply = await createPost(auth.decoded.accountId, content, parentPostId);
