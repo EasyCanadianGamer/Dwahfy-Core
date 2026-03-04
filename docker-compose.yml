@@ -5,6 +5,8 @@ services:
       - .env
     ports:
       - "3000:3000"
+    volumes:
+      - uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy     # ← this is the key change
@@ -29,3 +31,4 @@ services:
 
 volumes:
   postgres_data:
+  uploads:

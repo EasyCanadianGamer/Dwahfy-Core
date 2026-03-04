@@ -73,6 +73,10 @@ const initDb = async () => {
     );
   `);
   await pool.query(`
+    ALTER TABLE accounts
+    ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT FALSE;
+  `);
+  await pool.query(`
     ALTER TABLE profiles
     ADD COLUMN IF NOT EXISTS bad_words_enabled BOOLEAN NOT NULL DEFAULT TRUE;
   `);

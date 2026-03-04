@@ -35,11 +35,13 @@ const getPostWithCounts = async (postId) => {
       posts.updated_at,
       accounts.id AS author_id,
       accounts.username AS author_username,
+      profiles.avatar_url AS author_avatar_url,
       COALESCE(like_counts.like_count, 0) AS like_count,
       COALESCE(dislike_counts.dislike_count, 0) AS dislike_count,
       COALESCE(reply_counts.reply_count, 0) AS reply_count
     FROM posts
     JOIN accounts ON accounts.id = posts.author_id
+    LEFT JOIN profiles ON profiles.account_id = accounts.id
     LEFT JOIN LATERAL (
       SELECT COUNT(*)::int AS like_count
       FROM post_reactions
@@ -73,11 +75,13 @@ const listPosts = async (limit) => {
       posts.updated_at,
       accounts.id AS author_id,
       accounts.username AS author_username,
+      profiles.avatar_url AS author_avatar_url,
       COALESCE(like_counts.like_count, 0) AS like_count,
       COALESCE(dislike_counts.dislike_count, 0) AS dislike_count,
       COALESCE(reply_counts.reply_count, 0) AS reply_count
     FROM posts
     JOIN accounts ON accounts.id = posts.author_id
+    LEFT JOIN profiles ON profiles.account_id = accounts.id
     LEFT JOIN LATERAL (
       SELECT COUNT(*)::int AS like_count
       FROM post_reactions
@@ -113,11 +117,13 @@ const listReplies = async (parentPostId, limit) => {
       posts.updated_at,
       accounts.id AS author_id,
       accounts.username AS author_username,
+      profiles.avatar_url AS author_avatar_url,
       COALESCE(like_counts.like_count, 0) AS like_count,
       COALESCE(dislike_counts.dislike_count, 0) AS dislike_count,
       0::int AS reply_count
     FROM posts
     JOIN accounts ON accounts.id = posts.author_id
+    LEFT JOIN profiles ON profiles.account_id = accounts.id
     LEFT JOIN LATERAL (
       SELECT COUNT(*)::int AS like_count
       FROM post_reactions

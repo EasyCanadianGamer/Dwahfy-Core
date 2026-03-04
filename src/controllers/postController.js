@@ -7,7 +7,7 @@ const {
   setReaction,
 } = require('../models/postModel');
 const { requireAccountToken } = require('../utils/authToken');
-const { isBadWordsEnabled, containsBadWords } = require('../utils/badWords');
+const { isBadWordsEnabled, censorBadWords } = require('../utils/badWords');
 const { getBadWordsEnabledByAccountId } = require('../models/profileModel');
 
 const MAX_CONTENT_LENGTH = 1000;
@@ -32,24 +32,34 @@ const parseId = (value) => {
   return parsed;
 };
 
-const resolveBadWordsEnabled = async (accountId) => {
-  const preference = await getBadWordsEnabledByAccountId(accountId);
-  if (preference === null || preference === undefined) {
-    return isBadWordsEnabled();
+const resolveViewerCensorship = async (accountId) => {
+  if (accountId) {
+    const preference = await getBadWordsEnabledByAccountId(accountId);
+    if (preference !== null && preference !== undefined) {
+      return preference;
+    }
   }
-  return preference;
+  return isBadWordsEnabled();
 };
 
-const rejectBadWords = async (accountId, content, res) => {
-  const enabled = await resolveBadWordsEnabled(accountId);
-  if (!enabled) {
-    return false;
+const censorPost = (post, enabled) => {
+  if (!enabled || !post) return post;
+  return { ...post, content_text: censorBadWords(post.content_text) };
+};
+
+const getViewerAccountId = (req) => {
+  const header = (req.headers.authorization || '').trim();
+  if (!header.startsWith('Bearer ')) return null;
+  try {
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(
+      header.slice('Bearer '.length).trim(),
+      process.env.JWT_SECRET,
+    );
+    return decoded?.accountId ?? null;
+  } catch {
+    return null;
   }
-  if (!containsBadWords(content)) {
-    return false;
-  }
-  res.status(400).json({ message: 'Content contains disallowed language' });
-  return true;
 };
 
 const createPostHandler = async (req, res) => {
@@ -68,13 +78,12 @@ const createPostHandler = async (req, res) => {
         message: `Post content must be ${MAX_CONTENT_LENGTH} characters or fewer`,
       });
     }
-    if (await rejectBadWords(auth.decoded.accountId, content, res)) {
-      return null;
-    }
 
+    // Store raw content — censorship is applied at read time
     const post = await createPost(auth.decoded.accountId, content, null);
     const fullPost = await getPostWithCounts(post.id);
-    return res.status(201).json({ post: fullPost });
+    const enabled = await resolveViewerCensorship(auth.decoded.accountId);
+    return res.status(201).json({ post: censorPost(fullPost, enabled) });
   } catch (error) {
     return res
       .status(500)
@@ -84,9 +93,11 @@ const createPostHandler = async (req, res) => {
 
 const listPostsHandler = async (req, res) => {
   try {
+    const viewerId = getViewerAccountId(req);
+    const enabled = await resolveViewerCensorship(viewerId);
     const limit = parseLimit(req.query.limit);
     const posts = await listPosts(limit);
-    return res.json({ posts, limit });
+    return res.json({ posts: posts.map((p) => censorPost(p, enabled)), limit });
   } catch (error) {
     return res
       .status(500)
@@ -123,13 +134,12 @@ const createReplyHandler = async (req, res) => {
         message: `Reply content must be ${MAX_CONTENT_LENGTH} characters or fewer`,
       });
     }
-    if (await rejectBadWords(auth.decoded.accountId, content, res)) {
-      return null;
-    }
 
+    // Store raw content — censorship is applied at read time
     const reply = await createPost(auth.decoded.accountId, content, parentPostId);
     const fullReply = await getPostWithCounts(reply.id);
-    return res.status(201).json({ reply: fullReply });
+    const enabled = await resolveViewerCensorship(auth.decoded.accountId);
+    return res.status(201).json({ reply: censorPost(fullReply, enabled) });
   } catch (error) {
     return res
       .status(500)
@@ -149,9 +159,15 @@ const listRepliesHandler = async (req, res) => {
       return res.status(404).json({ message: 'Post not found' });
     }
 
+    const viewerId = getViewerAccountId(req);
+    const enabled = await resolveViewerCensorship(viewerId);
     const limit = parseLimit(req.query.limit);
     const replies = await listReplies(parentPostId, limit);
-    return res.json({ replies, limit, postId: parentPostId });
+    return res.json({
+      replies: replies.map((r) => censorPost(r, enabled)),
+      limit,
+      postId: parentPostId,
+    });
   } catch (error) {
     return res
       .status(500)
