@@ -96,7 +96,8 @@ const listPostsHandler = async (req, res) => {
     const viewerId = getViewerAccountId(req);
     const enabled = await resolveViewerCensorship(viewerId);
     const limit = parseLimit(req.query.limit);
-    const posts = await listPosts(limit);
+    const author = (req.query.author || '').trim().toLowerCase() || null;
+    const posts = await listPosts(limit, author);
     return res.json({ posts: posts.map((p) => censorPost(p, enabled)), limit });
   } catch (error) {
     return res

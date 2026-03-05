@@ -6,7 +6,7 @@ const {
   getPublicProfileByUsername,
 } = require('../models/profileModel');
 const { getAccountById, getAccountByUsername } = require('../models/accountModel');
-const { getBadgeById } = require('../models/badgeModel');
+const { getBadgeById, hasAccountBadge } = require('../models/badgeModel');
 
 const MAX_DISPLAY_NAME_LENGTH = 50;
 const MAX_BIO_LENGTH = 160;
@@ -159,6 +159,10 @@ const updateProfileHandler = async (req, res) => {
       const badgeExists = await getBadgeById(badgeId);
       if (!badgeExists) {
         return res.status(400).json({ message: 'Badge not found' });
+      }
+      const owned = await hasAccountBadge(account.id, badgeId);
+      if (!owned) {
+        return res.status(403).json({ message: 'You have not earned this badge' });
       }
     }
 

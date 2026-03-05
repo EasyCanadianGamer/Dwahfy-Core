@@ -185,6 +185,17 @@ const initDb = async () => {
       ON post_reactions(account_id);
   `);
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS user_badges (
+      account_id BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+      badge_id BIGINT NOT NULL REFERENCES badges(id) ON DELETE CASCADE,
+      granted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (account_id, badge_id)
+    );
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS user_badges_account_idx ON user_badges(account_id);
+  `);
+  await pool.query(`
     CREATE INDEX IF NOT EXISTS email_change_otps_account_idx
       ON email_change_otps(account_id);
   `);
