@@ -12,6 +12,8 @@ const adminBadgeRoutes = require('./routes/adminBadges');
 const adminUserRoutes = require('./routes/adminUsers');
 const adminPostRoutes = require('./routes/adminPosts');
 const uploadRoutes = require('./routes/upload');
+const followRoutes = require('./routes/follows');
+const userRoutes = require('./routes/users');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -28,6 +30,8 @@ app.use('/badges', badgeRoutes);
 app.use('/admin', adminBadgeRoutes);
 app.use('/admin/users', adminUserRoutes);
 app.use('/admin/posts', adminPostRoutes);
+app.use('/follows', followRoutes);
+app.use('/users', userRoutes);
 app.use('/upload', uploadRoutes);
 
 app.get('/', (req, res) => {

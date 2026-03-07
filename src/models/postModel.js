@@ -201,11 +201,57 @@ const setReaction = async (accountId, postId, reaction) => {
   }
 };
 
+const listFollowingPosts = async (accountId, limit) => {
+  const result = await pool.query(
+    `
+    SELECT
+      posts.id,
+      posts.content_text,
+      posts.parent_post_id,
+      posts.created_at,
+      posts.updated_at,
+      accounts.id AS author_id,
+      accounts.username AS author_username,
+      profiles.avatar_url AS author_avatar_url,
+      COALESCE(like_counts.like_count, 0) AS like_count,
+      COALESCE(dislike_counts.dislike_count, 0) AS dislike_count,
+      COALESCE(reply_counts.reply_count, 0) AS reply_count
+    FROM posts
+    JOIN accounts ON accounts.id = posts.author_id
+    LEFT JOIN profiles ON profiles.account_id = accounts.id
+    LEFT JOIN LATERAL (
+      SELECT COUNT(*)::int AS like_count
+      FROM post_reactions
+      WHERE post_id = posts.id AND reaction = 'like'
+    ) like_counts ON true
+    LEFT JOIN LATERAL (
+      SELECT COUNT(*)::int AS dislike_count
+      FROM post_reactions
+      WHERE post_id = posts.id AND reaction = 'dislike'
+    ) dislike_counts ON true
+    LEFT JOIN LATERAL (
+      SELECT COUNT(*)::int AS reply_count
+      FROM posts replies
+      WHERE replies.parent_post_id = posts.id
+    ) reply_counts ON true
+    WHERE posts.parent_post_id IS NULL
+      AND posts.author_id IN (
+        SELECT following_id FROM follows WHERE follower_id = $2
+      )
+    ORDER BY posts.created_at DESC
+    LIMIT $1
+  `,
+    [limit, accountId]
+  );
+  return result.rows;
+};
+
 module.exports = {
   createPost,
   getPostById,
   getPostWithCounts,
   listPosts,
+  listFollowingPosts,
   listReplies,
   setReaction,
 };

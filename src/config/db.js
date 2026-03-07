@@ -203,6 +203,20 @@ const initDb = async () => {
     CREATE INDEX IF NOT EXISTS password_reset_otps_account_idx
       ON password_reset_otps(account_id);
   `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS follows (
+      follower_id BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+      following_id BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (follower_id, following_id)
+    );
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS follows_follower_idx ON follows(follower_id);
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS follows_following_idx ON follows(following_id);
+  `);
   console.log('Postgres connected');
 };
 

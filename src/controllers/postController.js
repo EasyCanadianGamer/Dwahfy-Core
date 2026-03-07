@@ -3,6 +3,7 @@ const {
   getPostById,
   getPostWithCounts,
   listPosts,
+  listFollowingPosts,
   listReplies,
   setReaction,
 } = require('../models/postModel');
@@ -96,6 +97,15 @@ const listPostsHandler = async (req, res) => {
     const viewerId = getViewerAccountId(req);
     const enabled = await resolveViewerCensorship(viewerId);
     const limit = parseLimit(req.query.limit);
+
+    if (req.query.feed === 'following') {
+      if (!viewerId) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+      const posts = await listFollowingPosts(viewerId, limit);
+      return res.json({ posts: posts.map((p) => censorPost(p, enabled)), limit });
+    }
+
     const author = (req.query.author || '').trim().toLowerCase() || null;
     const posts = await listPosts(limit, author);
     return res.json({ posts: posts.map((p) => censorPost(p, enabled)), limit });
